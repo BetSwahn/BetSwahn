@@ -11,11 +11,11 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#3a1258 0%,var(--bg) 60%) fixed,var(--bg);color:var(--text);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;line-height:1.5}
-h1,h2,h3{font-family:Georgia,"Times New Roman",serif;margin:0}
+h1,h2,h3,h4{font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em;margin:0}
 .wrap{max-width:900px;margin:0 auto;padding:0 16px 48px}
 header{text-align:center;padding:36px 0 6px}
 header img{width:132px;height:132px;border-radius:50%;box-shadow:0 0 0 3px var(--burg2),0 0 40px rgba(163,40,63,.55)}
-header h1{font-size:2.6rem;margin-top:14px;letter-spacing:.02em}
+header h1{font-size:2.6rem;margin-top:14px;letter-spacing:.08em}
 header p{color:var(--muted);margin:4px 0 0}
 nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0 0}
 nav a{color:var(--text);text-decoration:none;padding:8px 16px;border-radius:99px;background:var(--panel2);border:1px solid var(--purple);font-size:.9rem}
@@ -80,7 +80,7 @@ tbody tr{cursor:pointer}tbody tr:hover td,tbody tr:focus-visible td{background:r
 .stat small{color:var(--muted);display:block;font-size:.75rem}
 .stat b{font-size:1.15rem}
 .stat.hl{background:linear-gradient(135deg,var(--burg),var(--purple))}
-.sheet h4{font-family:Georgia,serif;font-size:1.05rem;margin:18px 0 8px}
+.sheet h4{font-size:.95rem;margin:18px 0 8px}
 .chips span{display:inline-block;padding:4px 12px;border-radius:99px;font-size:.8rem;margin:0 6px 6px 0;background:var(--purple)}
 .chips span.now{background:var(--up);color:#14061f}
 .sq div,.sn div{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.06);font-size:.92rem}
@@ -214,6 +214,9 @@ tbody tr{cursor:pointer}tbody tr:hover td,tbody tr:focus-visible td{background:r
 .sb i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--burg),var(--purple));border-radius:7px 0 0 7px}
 .sb span,.sb em{position:relative;z-index:1;font-style:normal}.sb em{color:var(--gold)}
 .sk{min-width:88px;text-align:right;font-size:1rem;font-weight:800;flex:none}
+.ov{align-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet{border-radius:22px;max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:20px 18px 24px;box-shadow:0 24px 70px rgba(0,0,0,.65)}
+.bl{text-transform:uppercase;letter-spacing:.06em}
 footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:40px}
 </style>
 </head>
