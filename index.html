@@ -199,6 +199,21 @@ tbody tr{cursor:pointer}tbody tr:hover td,tbody tr:focus-visible td{background:r
 .lt.compact .ks{display:none}
 @media(prefers-reduced-motion:reduce){.ks .k1 i{animation:none}}
 .trb{background:var(--panel2);border-radius:12px;padding:6px 14px;margin-top:6px}
+.upd{background:linear-gradient(135deg,var(--panel),var(--panel2));border:1px solid var(--burg2);border-radius:16px;padding:30px 20px;text-align:center}
+.upd .ui{font-size:2.2rem}.upd h3{font-size:1.35rem;margin:6px 0}.upd p{color:var(--muted);margin:0}
+.pl{grid-template-columns:34px minmax(0,1fr) auto auto;gap:5px 8px;padding:8px 10px}
+.pt{width:34px;font-size:.58rem}
+.pn{flex-wrap:nowrap;min-width:0;gap:5px}.pn b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.95rem}
+.pm{grid-column:auto;flex-wrap:nowrap;gap:5px}
+.op{font-size:.68rem;padding:2px 6px;white-space:nowrap}.stt{font-size:.68rem;padding:2px 8px}
+.pq{min-width:22px}.pp{font-size:1.1rem}.cb,.ar{flex:none}
+@media(max-width:350px){.pl{grid-template-columns:34px minmax(0,1fr) auto}.pm{grid-column:2/-1;grid-row:2}.pq{grid-column:3;grid-row:1}}
+.sr{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid rgba(255,255,255,.07)}.sr:first-child{border-top:0}
+.sy{width:58px;color:var(--muted);font-size:.9rem;flex:none}
+.sb{position:relative;flex:1;min-width:0;height:26px;background:var(--panel2);border-radius:7px;overflow:hidden;display:flex;align-items:center;justify-content:space-between;padding:0 8px;font-size:.78rem;font-weight:700}
+.sb i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--burg),var(--purple));border-radius:7px 0 0 7px}
+.sb span,.sb em{position:relative;z-index:1;font-style:normal}.sb em{color:var(--gold)}
+.sk{min-width:88px;text-align:right;font-size:1rem;font-weight:800;flex:none}
 footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:40px}
 </style>
 </head>
@@ -365,7 +380,13 @@ async function loadLive(){
 }
 
 (async()=>{
-if(PROXY){try{await loadLive()}catch(e){console.error(e);UPDATED="demo-data (kunde inte hämta live)"}}
+const FORCE_DEMO=/[?&#]demo/.test(String(location.search)+String(location.hash));
+if(PROXY&&!FORCE_DEMO){try{await loadLive()}catch(e){console.error(e);
+ const upd=String(e&&e.message)==="503";
+ document.getElementById("rows").innerHTML=`<div class="upd"><div class="ui">🛠️</div><h3>${upd?"Spelet uppdateras":"Kunde inte hämta data"}</h3><p>${upd?"FPL uppdaterar spelet inför nästa omgång. Tabellen visas här igen så fort det är klart.":"Något gick fel när sidan hämtade data från FPL."} Sidan försöker igen automatiskt varje minut.</p></div>`;
+ [".seg",".lh",".tip","#awards","#hall"].forEach(q=>{const el=document.querySelector(q);if(el)el.style.display="none"});
+ document.getElementById("gw").textContent="–";document.getElementById("upd").textContent="–";
+ setTimeout(()=>location.reload(),60000);return}}
 const byName = n => L.find(x=>x.n===n)||{};
 const ini = n => (byName(n).t||n).split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
 const crest = (n,el)=>{el.style.background=byName(n).c;el.textContent=ini(n)};
@@ -450,14 +471,14 @@ function plRow(p,x){
   const live=p.fx.some(f=>f.st==="l"),done=p.fx.every(f=>f.st==="f"),up=p.fx.find(f=>f.st==="u");
   const s=live?"l":done&&p.fx.length?"f":"u";
   let stt;
-  if(live)stt=`<span class="stt l"><i></i>Live · ${p.mn}'</span>`;
-  else if(done&&p.fx.length)stt=p.mn>0?`<span class="stt f">Klar · ${p.mn}'</span>`:`<span class="stt x" title="Spelade inte">🚫</span>`;
+  if(live)stt=`<span class="stt l"><i></i>Live ${p.mn}'</span>`;
+  else if(done&&p.fx.length)stt=p.mn>0?`<span class="stt f">Klar ${p.mn}'</span>`:`<span class="stt x" title="Spelade inte">🚫</span>`;
   else if(up)stt=`<span class="stt u">${koT(up.ko)}</span>`;else stt=`<span class="stt u">Ingen match</span>`;
   const ops=p.fx.map(f=>`<span class="op" style="background:${FDC[f.fd]||FDC[3]}">${f.o} (${f.h?"H":"A"})</span>`).join("")||`<span class="op none">–</span>`;
   const ar=p.in?`<span class="ar up" title="Inbytt">▲</span>`:p.out?`<span class="ar dn" title="Utbytt">▼</span>`:"";
   const bd=p.c?`<em class="cb" title="Kapten">C</em>`:p.v?`<em class="cb v" title="Vicekapten">V</em>`:"";
-  const pts=`<b class="pp${p.bn?" dim":""}">${p.p}</b>`+(p.m>1?`<small>×${p.m}</small>`:"");
-  return `<div class="plw"><div class="pl p${p.ty} s${s}${p.out?" out":""}${p.in?" inn":""}" tabindex="0" role="button" aria-expanded="false"><span class="pt t${p.ty}">${PT[p.ty]}</span><div class="pn"><b>${p.n}</b>${ar}${bd}</div><div class="pq">${pts}</div><div class="pm">${ops}${stt}</div></div><div class="pd" hidden>${bdHtml(p)}${ownHtml(p,x)}</div></div>`;
+  const pts=`<b class="pp${p.bn?" dim":""}">${p.p}</b>`;
+  return `<div class="plw"><div class="pl p${p.ty} s${s}${p.out?" out":""}${p.in?" inn":""}" tabindex="0" role="button" aria-expanded="false"><span class="pt t${p.ty}">${PT[p.ty]}</span><div class="pn"><b>${p.n}</b>${ar}${bd}</div><div class="pm">${ops}${stt}</div><div class="pq">${pts}</div></div><div class="pd" hidden>${bdHtml(p)}${ownHtml(p,x)}</div></div>`;
 }
 function squadHtml(x){
   const sq=x.squad;if(!sq||!sq.length)return "";
@@ -509,11 +530,15 @@ function historyHtml(d){
   const pick=(k,dir)=>H.reduce((a,b)=>dir*k(b)>dir*k(a)?b:a);
   const br=pick(s=>num(s[1]),-1),wr=pick(s=>num(s[1]),1),bp=pick(s=>s[2],1);
   const sum=H.reduce((a,s)=>a+s[2],0),ar=Math.round(H.reduce((a,s)=>a+num(s[1]),0)/H.length),t100=H.filter(s=>num(s[1])<=100000).length;
-  return `<h4>Tränarens historia</h4><div class="stats">${st("Säsonger i FPL",H.length)}${st("Debutsäsong",H[H.length-1][0])}${st("Bästa rank · "+br[0],br[1])}${st("Sämsta rank · "+wr[0],wr[1])}${st("Bästa poäng · "+bp[0],f(bp[2])+" p")}${st("Snittpoäng per säsong",f(Math.round(sum/H.length))+" p")}${st("Snittrank",f(ar))}${st("Totalpoäng, tidigare säsonger",f(sum)+" p")}${st("Topp 100 000-säsonger",t100+" st")}${st("Senaste säsongen",H[0][1]+" · "+f(H[0][2])+" p")}</div>`;
+  const PC=H.map(s=>({s:s[0],v:topPct(s[0],s[1])})).filter(o=>o.v!=null),pb=PC.length?PC.reduce((a,b)=>b.v<a.v?b:a):null,pa=PC.length?PC.reduce((a,b)=>a+b.v,0)/PC.length:null;
+  return `<h4>Tränarens historia</h4><div class="stats">${st("Säsonger i FPL",H.length)}${st("Debutsäsong",H[H.length-1][0])}${st("Bästa rank · "+br[0],br[1])}${st("Sämsta rank · "+wr[0],wr[1])}${st("Bästa poäng · "+bp[0],f(bp[2])+" p")}${st("Snittpoäng per säsong",f(Math.round(sum/H.length))+" p")}${st("Snittrank",f(ar))}${st("Totalpoäng, tidigare säsonger",f(sum)+" p")}${st("Topp 100 000-säsonger",t100+" st")}${st("Senaste säsongen · "+f(H[0][2])+" p",H[0][1])}${pb?st("Bästa säsong i procent · "+pb.s,"Topp "+fp(pb.v)+" %"):""}${pa!=null?st("Snitt alla säsonger","Topp "+fp(pa)+" %"):""}</div>`;
 }
+const TOTALS={"2002/03":76284,"2003/04":312026,"2004/05":472251,"2005/06":810000,"2006/07":1270000,"2007/08":1700000,"2008/09":1950000,"2009/10":2100000,"2010/11":2350000,"2011/12":2785573,"2012/13":2610000,"2013/14":3220000,"2014/15":3500000,"2015/16":3730000,"2016/17":4500000,"2017/18":5190000,"2018/19":6320000,"2019/20":7630000,"2020/21":8150000,"2021/22":9170000,"2022/23":11450000,"2023/24":10910000,"2024/25":11500000,"2025/26":13100000};
+const fp=v=>(v<1?v.toFixed(2):v<10?v.toFixed(1):String(Math.round(v))).replace(".",",");
+function topPct(season,rk){const t=TOTALS[season],r=+String(rk).replace(/\D/g,"");return t&&r?Math.min(100,r/t*100):null}
 function seasonsHtml(d){
-  const H=d.hist||[];if(!H.length)return "";const mx=Math.max(...H.map(s=>s[2]));
-  return `<h4>Tidigare säsonger</h4><div class="sn">${H.map(s=>`<div><span>${s[0]}</span><div class="bar"><i style="width:${s[2]/mx*100}%"></i></div><small>#${s[1]}</small><span>${s[2].toLocaleString("sv-SE")}</span></div>`).join("")}</div>`;
+  const H=[...(d.hist||[])].reverse();if(!H.length)return "";const mx=Math.max(...H.map(s=>s[2]));
+  return `<h4>Tidigare säsonger</h4><div class="ssn">${H.map(s=>{const tp=topPct(s[0],s[1]),fill=tp==null?Math.round(s[2]/mx*100):Math.max(2,100-tp),lab=tp==null?"":`Topp ${fp(tp)} %`;return `<div class="sr"><span class="sy">${s[0]}</span><div class="sb"><i style="width:${fill}%"></i><span>${s[2].toLocaleString("sv-SE")} p</span><em>${lab}</em></div><b class="sk">#${s[1]}</b></div>`}).join("")}</div><p class="hint">Stapeln visar hur stor andel av alla spelare managern slog den säsongen. Topp 1 % betyder att bara 1 % av spelarna hade bättre rank. Antal spelare per säsong är ungefärliga slutsiffror.</p>`;
 }
 function openM(n){
   const x=byName(n),d=x.d||demoD(x),rank=sorted.indexOf(x)+1,S=seriesOf(x);lastFocus=document.activeElement;
@@ -543,7 +568,7 @@ segB.forEach(b=>b.onclick=()=>setV(b.dataset.v));
 try{setV(localStorage.getItem("bsv")||"")}catch(e){setV("")}
 if(typeof window!=="undefined")window.addEventListener("resize",fit);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
-if(PROXY)setInterval(()=>{if(!ov.classList.contains("on"))location.reload()},60000);
+if(PROXY&&!FORCE_DEMO)setInterval(()=>{if(!ov.classList.contains("on"))location.reload()},60000);
 })();
 </script>
 </body>
