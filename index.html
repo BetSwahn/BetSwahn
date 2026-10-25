@@ -294,6 +294,14 @@ nav button:hover,nav button:focus-visible{outline:2px solid var(--gold)}
 .mg{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
 .mct{font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--muted);padding-bottom:3px;margin-bottom:4px}
 .mcr{font-size:.82rem;padding:2px 0}.mcr b{color:var(--gold);font-weight:600}.mcr.none{color:var(--muted)}
+.w2{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+.w2 b{display:block;font-size:1rem;line-height:1.25}
+.w2 span{display:block;color:var(--muted);font-size:.85rem}
+.w2 em{display:block;margin-top:4px;font-style:normal;color:var(--gold);font-weight:700}
+.w2.none b{color:var(--muted);font-weight:400}
+.gb{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.gb::-webkit-scrollbar{display:none}
+.gb>div{flex:0 0 calc((100% - 42px)/8)}
 footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:40px}
 </style>
 </head>
@@ -340,17 +348,22 @@ let L = [
  {n:"Jonas",t:"Autopilot United",c:"#5b2a86",g:29,pts:477,form:"LLDLL",mv:0}
 ];
 let AWARDS = [
- {k:"bench",i:'<i class="aimg a-bench"></i>',t:"Bänkångesten",d:"Flest poäng kvar på bänken",w:"Markus",v:"23 p"},
- {k:"slag",i:'<i class="aimg a-slag"></i>',t:"Veckans slagpåse",d:"Lägst poäng i omgången",w:"Jonas",v:"29 p"},
- {k:"klatt",i:'<i class="aimg a-klatt"></i>',t:"Omgångens klättrare",d:"Flest placeringar upp",w:"Joel",v:"+2 platser"},
- {k:"fall",i:"🎢",t:"Fritt fall",d:"Flest tappade placeringar i tabellen",w:"Markus",v:"-2 platser"},
- {k:"gold",i:"💎",t:"Guldköpet",d:"Flest poäng från ett nyförvärv som togs in inför omgången",w:"Anton",v:"Gyökeres 17 p"},
- {k:"diff",i:"🎯",t:"Differens-kung",d:"Flest poäng från en spelare med låg ägarandel (under 10 %)",w:"Simon",v:"Semenyo 14 p"}];
-let WEEK = {w:"Joel",v:"88 poäng i omgång 8."};
-let MONTH = {w:"Anton",v:"301 poäng i oktober (omg. 1–8)."};
-const HOF = [["2025/26","Erik Arvidsson"],["2024/25","Anton Furuland"],["2023/24","Marcus Lantz"],["2022/23","Petrus Stenson"],["2021/22","Oscar Robertson"],["2020/21","Håkan Wattman"],["2019/20","Christoffer Belachew Swahn"]];
+ {k:"bench",i:'<i class="aimg a-bench"></i>',t:"Bänkångesten",d:"Flest poäng kvar på bänken",w:"Markus",full:"Markus Exempel",team:"Salah Alaikum",v:"23 p"},
+ {k:"slag",i:'<i class="aimg a-slag"></i>',t:"Veckans slagpåse",d:"Lägst poäng i omgången",w:"Jonas",full:"Jonas Exempel",team:"Autopilot United",v:"29 p"},
+ {k:"klatt",i:'<i class="aimg a-klatt"></i>',t:"Omgångens klättrare",d:"Flest placeringar upp",w:"Joel",full:"Joel Exempel",team:"Haaland Solo",v:"+2 platser"},
+ {k:"fall",i:"🎢",t:"Fritt fall",d:"Flest tappade placeringar i tabellen",w:"Markus",full:"Markus Exempel",team:"Salah Alaikum",v:"-2 platser"},
+ {k:"gold",i:"💎",t:"Guldköpet",d:"Flest poäng från ett nyförvärv som togs in inför omgången",w:"Anton",full:"Anton Exempel",team:"Lejonhjärtat",v:"Gyökeres 17 p"},
+ {k:"diff",i:"🎯",t:"Differens-kung",d:"Flest poäng från en spelare som ägs av färre än 10 % av ligan",w:"Simon",full:"Simon Exempel",team:"Wirtz Kid",v:"Semenyo 14 p"}];
+let WEEK = {w:"Joel",full:"Joel Exempel",team:"Haaland Solo",v:"88 p"};
+let MONTH = {w:"Anton",full:"Anton Exempel",team:"Lejonhjärtat",v:"301 p"};
+const HOF = [["2025/26","Anton Furuland"],["2024/25","Kim Johansson"],["2023/24","Anton Furuland"],["2022/23","Johannes Forsberg"],["2021/22","Christoffer Belachew Swahn"],["2020/21","Anton Furuland"],["2019/20","Kim Johansson"]];
 // ========================
-const api=p=>fetch(PROXY+p).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+const AC={};
+const api=p=>{const now=Date.now(),h=AC[p];if(h&&now-h.t<h.ttl)return h.v;
+  const m=p.match(/\/event\/(\d+)\//)||p.match(/fixtures\/\?event=(\d+)/),fin=m&&+m[1]<CURGW;
+  const ttl=fin?36e5:/\/entry\/\d+\/(history|transfers)\//.test(p)?9e4:15e3;
+  const v=fetch(PROXY+p).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+  AC[p]={t:now,ttl,v};v.catch(()=>{if(AC[p]&&AC[p].v===v)delete AC[p]});return v};
 const CH={bboost:"Bench Boost",wildcard:"Wildcard","3xc":"Triple Captain",freehit:"Free Hit",manager:"Assistant Manager"};
 const nf=v=>Number(v).toLocaleString("sv-SE");
 function resolve(sq,chip){
@@ -424,10 +437,12 @@ async function loadLive(sel){
     val:((pk.entry_history.value||0)/10).toFixed(1).replace(".",",")+" m",bank:((pk.entry_history.bank||0)/10).toFixed(1).replace(".",",")+" m",
     chip:pk.active_chip?(CH[pk.active_chip]||pk.active_chip):"Ingen",used:h.chips.map(c=>CH[c.name]||c.name),
     hist:past.map(x=>[x.season_name,nf(x.rank),x.total_points])},
-   rl:{e:ev_.slice(-8),g:pts.slice(-8),cap:cap?cap.n:"–",vc:vc?vc.n:"–",bench:sq.filter(k=>k.m===0).reduce((a,k)=>a+k.p,0),
+   rl:{e:ev_,g:pts,cap:cap?cap.n:"–",vc:vc?vc.n:"–",bench:sq.filter(k=>k.m===0).reduce((a,k)=>a+k.p,0),
     trs:h.current.reduce((a,c)=>a+c.event_transfers,0),hits:h.current.reduce((a,c)=>a+c.event_transfers_cost,0)+cost,gl:nf(orank),capP:cap?cap.p*cap.m:0}};
  }));
  rows.sort((a,b)=>b.pts-a.pts);
+ const lc={};rows.forEach(r=>r.squad.forEach(p=>{lc[p.id]=(lc[p.id]||0)+1}));
+ rows.forEach(r=>{let b2={n:"",p:0};r.squad.forEach(p=>{if(!p.bn&&lc[p.id]/rows.length<0.10&&p.p>b2.p)b2={n:p.n,p:p.p}});r.aw.diff=b2});   // ägs av färre än 10 % av ligan
  const base=[...rows].sort((a,b)=>b.ptot-a.ptot||res.findIndex(r=>r.entry===a.id)-res.findIndex(r=>r.entry===b.id)).map(r=>r.id);
  const avg={};rows.forEach(x=>x.ev.forEach((e,i)=>avg[e]=(avg[e]||0)+x.gw[i]/rows.length));
  res.forEach(r=>{});
@@ -438,22 +453,22 @@ async function loadLive(sel){
  });
  L=rows;
  const top=(f,hi)=>[...L].sort((a,b)=>hi?f(b)-f(a):f(a)-f(b))[0];
-  const lst=(f,hi,fm,ok)=>[...L].sort((a,b)=>hi?f(b)-f(a):f(a)-f(b)).filter(x=>!ok||ok(f(x))).slice(0,5).map(x=>({n:x.n,t:x.t,v:fm(f(x),x)}));
-  const mk=(k,i,t,d,f,hi,fm,ok)=>{const w=top(f,hi),v=f(w),g=!ok||ok(v);return {k,i,t,d,w:g?w.n:null,v:g?fm(v,w):"",list:lst(f,hi,fm,ok)}};
+  const lst=(f,hi,fm,ok)=>[...L].sort((a,b)=>hi?f(b)-f(a):f(a)-f(b)).filter(x=>!ok||ok(f(x))).slice(0,5).map(x=>({n:x.n,t:x.t,full:x.d.full,v:fm(f(x),x)}));
+  const mk=(k,i,t,d,f,hi,fm,ok)=>{const w=top(f,hi),v=f(w),g=!ok||ok(v);return {k,i,t,d,w:g?w.n:null,full:g?w.d.full:"",team:g?w.t:"",v:g?fm(v,w):"",list:lst(f,hi,fm,ok)}};
   const IC=c=>`<i class="aimg ${c}"></i>`;
   AWARDS=[mk("bench",IC("a-bench"),"Bänkångesten","Flest poäng kvar på bänken",x=>x.rl.bench,true,v=>v+" p",v=>v>0),
    mk("slag",IC("a-slag"),"Veckans slagpåse","Lägst poäng i omgången",x=>x.g,false,v=>v+" p"),
    mk("klatt",IC("a-klatt"),"Omgångens klättrare","Flest placeringar upp",x=>x.mv,true,v=>"+"+v+" platser",v=>v>0),
    mk("fall","🎢","Fritt fall","Flest tappade placeringar i tabellen",x=>x.mv,false,v=>v+" platser",v=>v<0),
    mk("gold","💎","Guldköpet","Flest poäng från ett nyförvärv som togs in inför omgången",x=>x.aw.gold.p,true,(v,w)=>w.aw.gold.n+" "+v+" p",v=>v>0),
-   mk("diff","🎯","Differens-kung","Flest poäng från en spelare med låg ägarandel (under "+DIFF+" %)",x=>x.aw.diff.p,true,(v,w)=>w.aw.diff.n+" "+v+" p",v=>v>0)];
+   mk("diff","🎯","Differens-kung","Flest poäng från en spelare som ägs av färre än 10 % av ligan",x=>x.aw.diff.p,true,(v,w)=>w.aw.diff.n+" "+v+" p",v=>v>0)];
   const w=top(x=>x.g,true),started=w.g>0;
   const mkey=e=>{const d=new Date(e.deadline_time);return d.getFullYear()+"-"+d.getMonth()};
   const selEv=b.events.find(e=>e.id===GW)||ev,monEvs=b.events.filter(e=>mkey(e)===mkey(selEv)&&e.id<=GW).map(e=>e.id);
   const mpts=x=>x.ev.reduce((a,e,i)=>a+(monEvs.includes(e)?x.gw[i]:0),0);
   const m=top(mpts,true),mname=new Date(selEv.deadline_time).toLocaleDateString("sv-SE",{month:"long"});
-  WEEK={k:"king",t:"Omgångens kung",d:"Flest poäng i omgången",w:started?w.n:null,v:started?`${w.g} poäng i omgång ${GW}.`:`Omgång ${GW} har inte startat.`,list:lst(x=>x.g,true,v=>v+" p",v=>v>0)};
-  MONTH={k:"month",t:"Månadens manager",d:"Bäst under månadsperioden",w:mpts(m)>0?m.n:null,v:mpts(m)>0?`${mpts(m)} poäng i ${mname} (omg. ${monEvs[0]}–${monEvs[monEvs.length-1]}).`:"Inga poäng än.",list:lst(mpts,true,v=>v+" p",v=>v>0)};
+  WEEK={k:"king",t:"Omgångens kung",d:"Flest poäng i omgången",w:started?w.n:null,full:started?w.d.full:"",team:started?w.t:"",v:started?`${w.g} p`:`Omgång ${GW} har inte startat.`,list:lst(x=>x.g,true,v=>v+" p",v=>v>0)};
+  MONTH={k:"month",t:"Månadens manager",d:"Bäst under månadsperioden",w:mpts(m)>0?m.n:null,full:mpts(m)>0?m.d.full:"",team:mpts(m)>0?m.t:"",v:mpts(m)>0?`${mpts(m)} p`:"Inga poäng än.",sub:`${mname} (omg. ${monEvs[0]}–${monEvs[monEvs.length-1]})`,list:lst(mpts,true,v=>v+" p",v=>v>0)};
  const t=new Date();UPDATED=t.toLocaleDateString("sv-SE",{day:"numeric",month:"short"})+" "+t.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"});
  document.getElementById("src").textContent="Live-data från FPL";
 }
@@ -512,7 +527,7 @@ function paint(){
 }
 paint();
 let gwBusy=false;
-const gwGo=async d=>{const t=GW+d;if(!LIVEMODE||t<1||t>CURGW||gwBusy)return;gwBusy=true;const pSel=SEL,pGW=GW;SEL=t>=CURGW?null:t;
+const gwGo=async d=>{const t=GW+d;if(!LIVEMODE||t<1||t>CURGW||gwBusy)return;gwBusy=true;await awQ.catch(()=>{});const pSel=SEL,pGW=GW;SEL=t>=CURGW?null:t;
   document.getElementById("upd").textContent="laddar…";
   try{await loadLive(SEL);paint()}catch(e){console.error(e);SEL=pSel;GW=pGW;document.getElementById("upd").textContent="kunde inte hämta"}
   gwBusy=false};
@@ -549,11 +564,11 @@ function extra(x){
 }
 const PT={1:"GK",2:"DEF",3:"MID",4:"FWD"},FDC=["","#1f9d55","#3fb87a","#7d7894","#d6475f","#a3173a"];
 const koT=iso=>{try{const d=new Date(iso);return d.toLocaleDateString("sv-SE",{weekday:"short"})+" "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"})}catch(e){return ""}};
-const BL=(id,v,bps)=>({minutes:`Spelade ${v} min`,goals_scored:`Mål (${v})`,assists:`Assist (${v})`,clean_sheets:"Hållit nollan",goals_conceded:`Insläppta mål (${v})`,own_goals:`Självmål (${v})`,penalties_saved:`Räddade straffar (${v})`,penalties_missed:`Missade straffar (${v})`,yellow_cards:`Gula kort (${v})`,red_cards:"Rött kort",saves:`Räddningar (${v})`,bonus:`Bonus (${bps||0} bps)`,defensive_contribution:`Defensiva bidrag (${v})`}[id]||id);
+const BL=(id,v,bps,ty)=>({minutes:`Spelade ${v} min`,goals_scored:`Mål (${v})`,assists:`Assist (${v})`,clean_sheets:"Hållit nollan",goals_conceded:`Insläppta mål (${v})`,own_goals:`Självmål (${v})`,penalties_saved:`Räddade straffar (${v})`,penalties_missed:`Missade straffar (${v})`,yellow_cards:`Gula kort (${v})`,red_cards:"Rött kort",saves:`Räddningar (${v})`,bonus:`Bonus (${bps||0} bps)`,defensive_contribution:`Defensiva bidrag (${v}${ty===2?"/10":ty>2?"/12":""})`}[id]||id);
 function bdHtml(p){
   const bd=p.bd||[];if(!bd.length)return `<div class="bk"><div class="bkh">Ingen matchdata än</div></div>`;
   return bd.map(f=>{const tot=f.rows.reduce((a,r)=>a+(r[2]||0),0);
-    return `<div class="bk"><div class="bkh">${f.o?f.o+" ("+(f.h?"H":"B")+")":"Match"}</div>${f.rows.map(r=>`<div class="bkr"><span>${BL(r[0],r[1],p.bps)}${r[3]?" <i>prov.</i>":""}</span><b class="${r[2]<0?"neg":r[2]>0?"pos":""}">${r[2]>0?"+":""}${r[2]}</b></div>`).join("")||`<div class="bkr"><span>Ingen poäng</span><b>0</b></div>`}<div class="bkt"><span>Totalt</span><b>${tot}</b></div></div>`}).join("")+(p.m>1?`<div class="bkm">Kapten ×${p.m}: <b>${p.p} p</b> räknas</div>`:"");
+    return `<div class="bk"><div class="bkh">${f.o?f.o+" ("+(f.h?"H":"B")+")":"Match"}</div>${f.rows.map(r=>`<div class="bkr"><span>${BL(r[0],r[1],p.bps,p.ty)}${r[3]?" <i>prov.</i>":""}</span><b class="${r[2]<0?"neg":r[2]>0?"pos":""}">${r[2]>0?"+":""}${r[2]}</b></div>`).join("")||`<div class="bkr"><span>Ingen poäng</span><b>0</b></div>`}<div class="bkt"><span>Totalt</span><b>${tot}</b></div></div>`}).join("")+(p.m>1?`<div class="bkm">Kapten ×${p.m}: <b>${p.p} p</b> räknas</div>`:"");
 }
 function ownHtml(p,x){
   const key=q=>q.id||q.n,k=key(p),sta=[],ben=[];
@@ -695,27 +710,34 @@ async function renderMatches(){
 }
 async function openMatches(){SH={type:"matches",n:GW};showSection("Matcher",'<p class="sub">Laddar…</p>',"nMatch");await renderMatches()}
 function awardsOverviewHtml(){
-  const hero=(k,t,ic,o)=>`<div class="big" data-k="${k}" tabindex="0" role="button"><i class="hi ${ic}"></i><h3>${t}</h3><div class="who">${o.w?`<div class="crest" style="background:${byName(o.w).c}">${ini(o.w)}</div><div class="name">${o.w}</div>`:'<div class="name none">Ingen</div>'}</div><p>${o.v||""}</p></div>`;
-  const card=a=>`<div class="card" data-k="${a.k}" tabindex="0" role="button"><div class="ic">${a.i}</div><h3>${a.t}</h3><p class="d">${a.d}</p>${a.w?`<div class="w"><div class="crest" style="background:${byName(a.w).c}">${ini(a.w)}</div><span>${a.w}</span><em>${a.v}</em></div>`:'<div class="w none"><span>Ingen</span></div>'}</div>`;
-  return `<p class="sub">Omgång ${GW}. Tryck på en award för att bläddra bland tidigare omgångar.</p><div class="hero-award">${hero("king","Omgångens kung","a-king",WEEK)}${hero("month","Månadens manager","a-month",MONTH)}</div><div class="grid">${AWARDS.map(card).join("")}</div>`;
+  const card=a=>`<div class="card" data-k="${a.k}" tabindex="0" role="button"><div class="ic">${a.i}</div><h3>${a.t}</h3><p class="d">${a.d}</p>${a.w?`<div class="w2"><b>${a.team||a.w}</b><span>${a.full||a.w}</span><em>${a.v}</em></div>`:'<div class="w2 none"><b>Ingen</b></div>'}</div>`;
+  const king={...WEEK,k:"king",t:"Omgångens kung",d:"Flest poäng i omgången",i:'<i class="aimg a-king"></i>'},month={...MONTH,k:"month",t:"Månadens manager",d:"Bäst under månadsperioden",i:'<i class="aimg a-month"></i>'};
+  return `<p class="sub">Omgång ${GW}. Tryck på en award för att bläddra bland tidigare omgångar.</p><div class="grid">${[king,month,...AWARDS].map(card).join("")}</div>`;
 }
 function hallHtml(){return `<div class="hfh"><p class="sub">Tidigare ligavinnare.</p><img class="tr" src="${TROPHY}" alt="Trofé"></div><div class="hist">${HOF.map(h=>`<div><span>${h[0]}</span><b>${h[1]}</b></div>`).join("")}</div>`}
 function monthsList(){
   const out=[];(EVENTS||[]).filter(e=>e.id<=CURGW).forEach(e=>{const d=new Date(e.deadline_time),k=d.getFullYear()+"-"+d.getMonth();let m=out.find(z=>z.k===k);if(!m){m={k,label:d.toLocaleDateString("sv-SE",{month:"long",year:"numeric"}),first:e.id,lastGW:e.id};out.push(m)}m.lastGW=e.id});
   return out;
 }
-async function awardsFor(n){
+let awQ=Promise.resolve();
+function awardsFor(n){return (awQ=awQ.catch(()=>{}).then(()=>awardsRaw(n)))}
+async function awardsRaw(n){
   if(!LIVEMODE||n===GW)return {AWARDS,WEEK,MONTH};
   if(AWC[n]&&n<CURGW)return AWC[n];
   const sv={L,GW,GWDONE,UPDATED,AWARDS,WEEK,MONTH};
   try{await loadLive(n);const r={AWARDS,WEEK,MONTH};if(n<CURGW)AWC[n]=r;return r}
   finally{L=sv.L;GW=sv.GW;GWDONE=sv.GWDONE;UPDATED=sv.UPDATED;AWARDS=sv.AWARDS;WEEK=sv.WEEK;MONTH=sv.MONTH}
 }
+function prefetchAw(){
+  if(!LIVEMODE||SH.type!=="award"||!ov.classList.contains("on"))return;
+  const ms=monthsList(),n=SH.key==="month"?(ms[SH.mi-1]?ms[SH.mi-1].lastGW:0):SH.n-1;
+  if(n>=1&&n<CURGW&&n!==GW&&!AWC[n])awardsFor(n).catch(()=>{});
+}
 const AWNAME={king:"Omgångens kung",month:"Månadens manager"};
 function awardDetailHtml(a,nav){
-  const w=a.w,wm=w?byName(w):{};
-  const win=w?`<div class="awin"><div class="crest" style="background:${wm.c||"#5b2a86"}">${ini(w)}</div><div><b>${w}</b><small>${wm.t||""}</small></div><em>${a.v||""}</em></div>`:'<div class="awin none"><b>Ingen vinnare den här gången</b></div>';
-  const list=(a.list&&a.list.length)?'<div class="ownt">Topplista</div>'+a.list.map((o,i)=>`<div class="ow"><b>${i+1}</b><span>${o.t} <small>${o.n}</small></span><em>${o.v}</em></div>`).join(""):"";
+  const w=a.w;
+  const win=w?`<div class="awin"><div><b>${a.team||w}</b><small>${a.full||w}</small></div><em>${a.v||""}</em></div>`:'<div class="awin none"><b>Ingen vinnare den här gången</b></div>';
+  const list=(a.list&&a.list.length)?'<div class="ownt">Topplista</div>'+a.list.map((o,i)=>`<div class="ow"><b>${i+1}</b><span>${o.t} <small>${o.full||o.n}</small></span><em>${o.v}</em></div>`).join(""):"";
   return `<button type="button" class="bkb" data-back>‹ Alla awards</button>${nav}<p class="adesc">${a.d||""}</p>${win}${list}`;
 }
 async function renderAward(){
@@ -725,7 +747,7 @@ async function renderAward(){
     const d=await awardsFor(n);
     const a=SH.key==="king"?d.WEEK:month?d.MONTH:d.AWARDS.find(z=>z.k===SH.key);
     const nav=!LIVEMODE?"":month?gnav("award",`<span class="cap">${ms[SH.mi]?ms[SH.mi].label:""}</span>`,SH.mi,0,ms.length-1):gnav("award","Omgång "+n,SH.n,1,CURGW);
-    setBody(awardDetailHtml(a,nav));
+    setBody(awardDetailHtml(a,nav));prefetchAw();
   }catch(e){console.error(e);setBody('<button type="button" class="bkb" data-back>‹ Alla awards</button><p class="sub">Kunde inte hämta awards.</p>')}
 }
 async function openAward(key){
@@ -753,7 +775,7 @@ function openM(n){
   h+=chartHtml(S,mx,mn,pool.length);
   h+=historyHtml(d);
   h+=seasonsHtml(d);
-  sheet.innerHTML=hd+`<div class="sbody">${h}</div>`;ov.classList.add("on");lockBody();document.getElementById("cl").focus();
+  sheet.innerHTML=hd+`<div class="sbody">${h}</div>`;ov.classList.add("on");lockBody();{const gbx=sheet.querySelector(".gb");if(gbx)gbx.scrollLeft=gbx.scrollWidth}document.getElementById("cl").focus();
 }
 let locked=false,sy=0;
 function lockBody(){if(locked||typeof window==="undefined"||!document.body)return;locked=true;sy=window.scrollY||0;const b=document.body.style;b.position="fixed";b.top=-sy+"px";b.left="0";b.right="0";b.width="100%"}
@@ -789,7 +811,7 @@ const setUpd=on=>{isUpd=on;
   else UPQ.forEach(q=>{const el=document.querySelector(q);if(el)el.style.display=""})};
 if(PROXY&&!FORCE_DEMO)setInterval(async()=>{
   if(ov.classList.contains("on")||SEL!==null)return;
-  try{await loadLive(SEL);if(isUpd)setUpd(false);paint()}
+  try{await awQ.catch(()=>{});await loadLive(SEL);if(isUpd)setUpd(false);paint()}
   catch(e){console.error(e);if(String(e&&e.message)==="503"&&!isUpd)setUpd(true)}
 },60000);
 })();
